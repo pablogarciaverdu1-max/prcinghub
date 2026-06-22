@@ -39,7 +39,6 @@
       opacity: 0; transform: translateX(60px); transition: opacity .4s ease, transform .4s ease; pointer-events: none;
     }
     .slide.active { opacity: 1; transform: translateX(0); pointer-events: all; }
-    .slide.exit-left { opacity: 0; transform: translateX(-60px); }
     .slide-header { margin-bottom: 28px; }
     .slide-badge {
       display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .12em;
@@ -209,6 +208,36 @@
         </div>
       </div>
     </div>
+    <div class="card" style="margin-top:18px;">
+      <div class="card-title blue">Database Cleaning &amp; Automation Tools</div>
+      <div style="display:grid; grid-template-columns: repeat(6,1fr); gap:12px;">
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:14px 12px;">
+          <div style="font-size:13px;font-weight:700;color:#7c86ff;margin-bottom:5px;">Crunchbase</div>
+          <div style="font-size:12px;color:#64748b;line-height:1.5;">Company intelligence and firmographic data for prospect research.</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:14px 12px;">
+          <div style="font-size:13px;font-weight:700;color:#34d399;margin-bottom:5px;">Make</div>
+          <div style="font-size:12px;color:#64748b;line-height:1.5;">No-code automation platform that connects tools and runs the full pipeline.</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:14px 12px;">
+          <div style="font-size:13px;font-weight:700;color:#22d3ee;margin-bottom:5px;">N8N</div>
+          <div style="font-size:12px;color:#64748b;line-height:1.5;">Open-source workflow automation for custom, self-hosted data pipelines.</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:14px 12px;">
+          <div style="font-size:13px;font-weight:700;color:#fbbf24;margin-bottom:5px;">Clearbit</div>
+          <div style="font-size:12px;color:#64748b;line-height:1.5;">Real-time B2B enrichment API for company and contact data.</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:14px 12px;">
+          <div style="font-size:13px;font-weight:700;color:#fb7185;margin-bottom:5px;">Apollo</div>
+          <div style="font-size:12px;color:#64748b;line-height:1.5;">Sales intelligence platform for prospecting, enrichment and outreach.</div>
+        </div>
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:14px 12px;">
+          <div style="font-size:13px;font-weight:700;color:#a78bfa;margin-bottom:5px;">Hunter.io</div>
+          <div style="font-size:12px;color:#64748b;line-height:1.5;">Finds and verifies professional email addresses from a domain or LinkedIn profile.</div>
+        </div>
+      </div>
+    </div>
+
     <div class="outcome-banner blue">
       <div class="outcome-label">Outcome</div>
       <div class="outcome-text">Only sales-ready records enter HubSpot.</div>
@@ -368,21 +397,52 @@
 <script>
   let current = 0;
   const total = 3;
+  let animating = false;
+
   function goTo(index) {
-    if (index === current) return;
-    const prev = document.getElementById('slide-' + current);
-    const next = document.getElementById('slide-' + index);
-    prev.classList.add(index > current ? 'exit-left' : '');
-    prev.classList.remove('active');
-    setTimeout(() => prev.classList.remove('exit-left'), 400);
-    next.classList.add('active');
+    if (index === current || animating) return;
+    animating = true;
+    const goingForward = index > current;
+    const prevEl = document.getElementById('slide-' + current);
+    const nextEl = document.getElementById('slide-' + index);
+
+    // position incoming slide off-screen without transition
+    nextEl.style.transition = 'none';
+    nextEl.style.opacity = '0';
+    nextEl.style.transform = goingForward ? 'translateX(60px)' : 'translateX(-60px)';
+    nextEl.style.pointerEvents = 'none';
+
+    // force reflow so browser registers the start position
+    nextEl.offsetHeight;
+
+    // animate both slides
+    nextEl.style.transition = '';
+    prevEl.style.transition = '';
+
+    prevEl.style.opacity = '0';
+    prevEl.style.transform = goingForward ? 'translateX(-60px)' : 'translateX(60px)';
+    prevEl.style.pointerEvents = 'none';
+
+    nextEl.style.opacity = '1';
+    nextEl.style.transform = 'translateX(0)';
+    nextEl.style.pointerEvents = 'all';
+
     current = index;
     updateUI();
+
+    setTimeout(() => {
+      // clean up prev
+      prevEl.style.transition = 'none';
+      prevEl.style.transform = goingForward ? 'translateX(60px)' : 'translateX(-60px)';
+      animating = false;
+    }, 420);
   }
+
   function navigate(dir) {
     const t = current + dir;
     if (t >= 0 && t < total) goTo(t);
   }
+
   function updateUI() {
     document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === current));
     document.querySelectorAll('.dot').forEach((d, i) => d.classList.toggle('active', i === current));
@@ -390,6 +450,7 @@
     document.getElementById('next-btn').disabled = current === total - 1;
     document.getElementById('counter').textContent = (current + 1) + ' / ' + total;
   }
+
   document.addEventListener('keydown', e => {
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') navigate(1);
     if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   navigate(-1);
